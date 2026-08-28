@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'staging', 'production'],
+            description: 'Select deployment environment'
+        )
+    }
+
     stages {
 
         stage('Checkout') {
@@ -27,13 +35,14 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image...'
-                sh 'docker build -t hello-world-app:latest .'
+                sh 'docker build -t hello-world-app:${BUILD_NUMBER} .'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying application...'
+                echo 'Deploying to ${params.ENVIRONMENT}'
+                
 
                 sh '''
                     docker stop hello-world-app || true
