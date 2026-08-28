@@ -1,3 +1,4 @@
+```groovy
 pipeline {
     agent any
 
@@ -34,26 +35,27 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
+                echo "Building Docker image: hello-world-app:${BUILD_NUMBER}"
+
                 sh 'docker build -t hello-world-app:${BUILD_NUMBER} .'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying to ${params.ENVIRONMENT}'
-                
+                echo "Deploying to ${params.ENVIRONMENT}"
 
                 sh '''
                     docker stop hello-world-app || true
                     docker rm hello-world-app || true
 
                     docker run -d \
-                    --name hello-world-app \
-                    -p 8080:8080 \
-                    hello-world-app:latest
+                      --name hello-world-app \
+                      -p 8080:8080 \
+                      hello-world-app:${BUILD_NUMBER}
                 '''
             }
         }
     }
 }
+```
