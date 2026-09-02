@@ -1,0 +1,45 @@
+---
+# Deploy playbook — pulls the tagged image built by Jenkins and runs it on VM2.
+# This is NOT the nginx exercise — that lives separately in ansible-lab/setup.yml.
+
+- name: Deploy Spring Boot app container to VM2
+  hosts: web
+  become: true
+
+  tasks:
+    - name: Log in to the Docker registry (skip if pulling a public image)
+      ansible.builtin.command: >
+        docker login -u "{{ registry_username }}" -p "{{ registry_password }}" {{ registry_url | default('') }}
+      no_log: true
+      when: registry_username is defined and registry_password is defined
+
+    - name: Pull the new image
+      ansible.builtin.command: docker pull {{ image_name }}:{{ image_tag }}
+
+    - name: Stop the currently running container (ok if it doesn't exist yet)
+      ansible.builtin.command: docker stop hello-world-app
+      failed_when: false
+
+    - name: Remove the old container (ok if it doesn't exist yet)
+      ansible.builtin.command: docker rm hello-world-app
+      failed_when: false
+
+    - name: Run the new container
+      ansible.builtin.command: >
+        docker run -d
+        --name hello-world-app
+        --restart unless-stopped
+        -p 8080:8080
+        {{ image_name }}:{{ image_tag }}
+
+    - name: Wait for the app to boot
+      ansible.builtin.pause:
+        seconds: 5
+
+    - name: Confirm the container is running
+      ansible.builtin.command: docker ps --filter "name=hello-world-app"
+      register: container_status
+
+    - name: Show container status
+      ansible.builtin.debug:
+        var: container_status.stdout_lines
