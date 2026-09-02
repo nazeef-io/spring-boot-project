@@ -60,6 +60,7 @@ pipeline {
                         docker run --rm \
                           --network host \
                           --user root \
+                          -e ANSIBLE_HOST_KEY_CHECKING=False \
                           -v "$WORKSPACE:/ansible" \
                           -w /ansible \
                           quay.io/ansible/ansible-runner \
